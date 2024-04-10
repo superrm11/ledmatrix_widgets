@@ -1,0 +1,10 @@
+[package]
+name = "ledmatrix_sysusage"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+battery = "0.7.8"
+serialport = "4.3.0"
+sysinfo = "0.30.9"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
