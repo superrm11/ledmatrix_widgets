@@ -30,7 +30,6 @@ impl LedMatrix {
     /// 
     pub fn detect() -> Vec<SerialPortInfo> {
         let sports = serialport::available_ports().expect("No ports found!");
-        println!("num ports: {}", sports.len());
 
         // Loop through all available serial ports, save ports that match the LED matrix product name
         let mut found_ledmat: Vec<SerialPortInfo> = vec![];
