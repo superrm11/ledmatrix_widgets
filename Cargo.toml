@@ -1,5 +1,7 @@
 [package]
 name = "ledmatrix_widgets"
+description = "A rust application for configuring and displaying widgets on the Framework 16 LED Matrix modules"
+license = "GPL-3.0"
 version = "0.1.0"
 edition = "2021"
 
