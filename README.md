@@ -16,4 +16,18 @@ A rust application for creating and displaying widgets on the Framework 16 LED M
 - JSON Configuration file
 
 ### Build Instructions
+
+Prereqs:
+```
+cargo
+
+# Arch
+systemd-libs
+
+# Ubuntu/Debian
+libudev-dev
+
+# Fedora
+systemd-dev
+```
 In the root directory, run `cargo build`. This project is cross platform, and works with both Windows and Linux.
