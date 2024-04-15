@@ -5,7 +5,7 @@ use std::{process::exit, thread, time::Duration};
 
 use ledmatrix::LedMatrix;
 
-use crate::widget::{AllCPUsWidget, BatteryWidget};
+use crate::widget::{AllCPUsWidget, BatteryWidget, UpdatableWidget};
 
 fn main() {
     // TODO possible options: 
@@ -37,6 +37,9 @@ fn main() {
     mats[1].draw_matrix(blank);
 
     loop {
+        b.update();
+        c.update();
+
         let mut matrix = [[0;9];34];
         matrix = matrix::emplace(matrix, Box::from(&mut b), 0, 0);
         matrix = matrix::emplace(matrix, Box::from(&mut c), 0, 5);

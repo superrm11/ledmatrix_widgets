@@ -7,13 +7,11 @@ pkgdesc="A rust application for configuring and displaying widgets on the Framew
 license=('GPL-3.0')
 
 build() {
-    return 0
+	cargo build --release
 }
 
 package() {
-	mkdir -p "$pkgdir/usr/"
-    cargo install --root="$pkgdir/usr/" ledmatrix_widgets
-	rm -f "$pkgdir/usr/.crates.toml" "$pkgdir/usr/.crates2.json"
-	
+	mkdir -p "$pkgdir/usr/bin/"
+	install -m 755 $startdir/target/release/ledmatrix_widgets $pkgdir/usr/bin/
 }
 

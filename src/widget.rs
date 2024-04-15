@@ -9,6 +9,7 @@ pub struct Shape {
 
 /// A standard set of instructions for widgets that can be updated from the system
 pub trait UpdatableWidget {
+    fn update(&mut self);
     fn get_matrix(&mut self) -> Vec<u8>;
     fn get_shape(&mut self) -> Shape;
 }
@@ -38,8 +39,7 @@ impl BatteryWidget {
 }
 
 impl UpdatableWidget for BatteryWidget {
-
-    fn get_matrix(&mut self) -> Vec<u8> {
+    fn update(&mut self) {
         // Update the battery percentage
         self.bat_level_pct = battery::Manager::new()
             .unwrap()
@@ -52,7 +52,10 @@ impl UpdatableWidget for BatteryWidget {
             .unwrap()
             .state_of_charge()
             .get::<battery::units::ratio::percent>();
+    }
 
+    fn get_matrix(&mut self) -> Vec<u8> {
+        
         // Create the matrix
         let mut out: Vec<u8> = Vec::new();
         out.extend_from_slice(BAT_FRAME);
@@ -95,14 +98,19 @@ impl AllCPUsWidget {
 
 impl UpdatableWidget for AllCPUsWidget {
 
-    /// Refresh the CPU usage and redraw the matrix
-    fn get_matrix(&mut self) -> Vec<u8> {
+    fn update(&mut self) {
         // Refresh the cpu usage
         self.sys.refresh_cpu();
 
         for i in 0..self.sys.cpus().len() {
             self.cpu_usages[i] = self.sys.cpus()[i].cpu_usage().round() as u8;
+            print!("{} | ", self.cpu_usages[i]);
         }
+        println!("");
+    }
+
+    /// Refresh the CPU usage and redraw the matrix
+    fn get_matrix(&mut self) -> Vec<u8> {
 
         // Create the matrix
         let width = self.get_shape().x;

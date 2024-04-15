@@ -4,9 +4,19 @@ description = "A rust application for configuring and displaying widgets on the 
 license = "GPL-3.0"
 version = "0.1.0"
 edition = "2021"
+authors = ["Ryan McGee"]
 
 [dependencies]
 battery = "0.7.8"
-serialport = "4.3.0"
+serialport = {version = "4.3.0", default-features = false}
 sysinfo = "0.30.9"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[package.metadata.rpm]
+package = "ledmatrix_widgets"
+
+[package.metadata.rpm.cargo]
+buildflags = ["--release"]
+
+[package.metadata.rpm.targets]
+ledmatrix_widgets = { path = "/usr/bin/ledmatrix_widgets" }
