@@ -34,6 +34,7 @@ impl LedMatrix {
         // Loop through all available serial ports, save ports that match the LED matrix product name
         let mut found_ledmat: Vec<SerialPortInfo> = vec![];
         for ref sp in sports {
+            // println!("{:?}", sp.port_type);
             match sp.port_type {
                 SerialPortType::UsbPort(ref info) => {
                     let info_c = info.clone();

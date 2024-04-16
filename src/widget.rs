@@ -32,6 +32,7 @@ pub struct BatteryWidget {
 
 impl BatteryWidget {
     pub fn new() -> BatteryWidget {
+        println!("Initializing BatteryWidget");
         BatteryWidget {
             bat_level_pct: 0.0,
         }
@@ -89,6 +90,8 @@ impl AllCPUsWidget {
         let mut newsys = sysinfo::System::new();
         newsys.refresh_cpu();
 
+        println!("Initializing AllCPUsWidget");
+
         AllCPUsWidget {
             cpu_usages: vec![0; newsys.cpus().len()],
             sys: newsys
@@ -104,9 +107,7 @@ impl UpdatableWidget for AllCPUsWidget {
 
         for i in 0..self.sys.cpus().len() {
             self.cpu_usages[i] = self.sys.cpus()[i].cpu_usage().round() as u8;
-            print!("{} | ", self.cpu_usages[i]);
         }
-        println!("");
     }
 
     /// Refresh the CPU usage and redraw the matrix
