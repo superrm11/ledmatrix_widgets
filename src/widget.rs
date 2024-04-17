@@ -1,7 +1,5 @@
 use chrono::{Local, Timelike};
 
-use crate::matrix::emplace;
-
 const ON_FULL: u8 = 120;
 const ON_DIM: u8 = 68;
 const OFF: u8 = 0;
