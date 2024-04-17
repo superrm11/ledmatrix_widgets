@@ -1,11 +1,13 @@
 use crate::widget::UpdatableWidget;
 
+pub(crate) type Matrix = [[u8;9]; 34];
+
 ///
 /// Encode a 9x34 array of booleans to a 39 byte (one bit per pixel) array
 /// [0][0] starts in top left corner
 ///
-pub fn encode(arr: [[bool; 9]; 34]) -> [u8; 39] {
-    let mut out_arr: [u8; 39] = [0; 39];
+pub fn encode(arr: [[bool; 9]; 34]) -> [u8; 34] {
+    let mut out_arr: [u8; 34] = [0; 34];
     let mut index = 0;
     let mut byte_offs = 0;
     for i in 0..34 {
@@ -24,7 +26,7 @@ pub fn encode(arr: [[bool; 9]; 34]) -> [u8; 39] {
 ///
 /// Switch a 2D array's rows and columns
 /// 
-pub fn transpose(arr: [[u8; 9]; 34]) -> [[u8; 34]; 9] {
+pub fn transpose(arr: Matrix) -> [[u8;34]; 9] {
     let mut out = [[0; 34]; 9];
 
     for i in 0..34 {
@@ -39,7 +41,7 @@ pub fn transpose(arr: [[u8; 9]; 34]) -> [[u8; 34]; 9] {
 ///
 /// Overlay a smaller matrix on a larger matrix with a given position
 /// 
-pub fn emplace<T: UpdatableWidget>(orig: [[u8; 9]; 34], widget: Box<&mut T>, x: usize, y: usize) -> [[u8; 9]; 34] {
+pub fn emplace(orig: Matrix, widget: &Box<dyn UpdatableWidget>, x: usize, y: usize) -> Matrix {
     // assert!(x as usize + widget.width < 9 && y as usize + widget.height < 34);
     let mut out: [[u8; 9]; 34] = orig.clone();
 

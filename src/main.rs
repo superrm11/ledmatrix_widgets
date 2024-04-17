@@ -22,7 +22,9 @@ fn main() {
 
     let mut mats: Vec<LedMatrix> = Vec::new();
     for m in mats_info {
-        mats.push(LedMatrix::new(m));
+		let mut mat = LedMatrix::new(m);
+		mat.draw_matrix([[0;9];34]);
+        mats.push(mat);
     }
     
     println!("Found LED matrix modules:");
@@ -30,22 +32,21 @@ fn main() {
         println!("{} - {}", i.port_info.port_name.to_string(), i.get_fw_version());
     }
 
-    let mut b = BatteryWidget::new();
-    let mut c = AllCPUsWidget::new();
-	let mut clock = ClockWidget::new();
-
-    let blank = [[0;9];34];
-    mats[0].draw_matrix(blank);
+	let mut widgets: Vec<Box<dyn UpdatableWidget>> = Vec::with_capacity(3);
+	widgets.push(Box::from(BatteryWidget::new()));
+	widgets.push(Box::from(AllCPUsWidget::new(false)));
+	widgets.push(Box::from(ClockWidget::new()));
 
     loop {
-        b.update();
-        c.update();
-		clock.update();
-
-        let mut matrix = [[0;9];34];
-        matrix = matrix::emplace(matrix, Box::from(&mut b), 0, 0);
-        matrix = matrix::emplace(matrix, Box::from(&mut c), 0, 5);
-		matrix = matrix::emplace(matrix, Box::from(&mut clock), 0, 22);
+		let mut matrix = [[0;9];34];
+		let mut offset_x = 0;
+		let mut offset_y = 0;
+		for widget in widgets.iter_mut() {
+			widget.update();
+			let size = widget.get_shape();
+			matrix = matrix::emplace(matrix, widget, offset_x, offset_y);
+			offset_y += size.y + 1;
+		}
         mats[0].draw_matrix(matrix);
         thread::sleep(Duration::from_millis(2000));
     }
