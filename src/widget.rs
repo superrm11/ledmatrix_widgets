@@ -54,7 +54,7 @@ const DIGIT_2: &'static [u8] = [
 const DIGIT_3: &'static [u8] = [
 	ON_FULL, ON_FULL, ON_FULL,
 	OFF, OFF, ON_FULL,
-	ON_FULL, ON_FULL, ON_FULL,
+	ON_FULL, ON_FULL, OFF,
 	OFF, OFF, ON_FULL,
 	ON_FULL, ON_FULL, ON_FULL
 ].as_slice();
