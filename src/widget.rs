@@ -2,7 +2,7 @@ use chrono::{Local, Timelike};
 
 use crate::matrix::emplace;
 
-const ON_FULL: u8 = 255;
+const ON_FULL: u8 = 120;
 const ON_DIM: u8 = 68;
 const OFF: u8 = 0;
 
@@ -28,11 +28,11 @@ const BAT_FRAME: &'static [u8] = [
 	.as_slice();
 
 const DIGIT_0: &'static [u8] = [
-	ON_FULL, ON_FULL, ON_FULL,
+	OFF, ON_FULL, OFF,
 	ON_FULL, OFF, ON_FULL,
 	ON_FULL, OFF, ON_FULL,
 	ON_FULL, OFF, ON_FULL,
-	ON_FULL, ON_FULL, ON_FULL
+	OFF, ON_FULL, OFF
 ].as_slice();
 
 const DIGIT_1: &'static [u8] = [
@@ -230,34 +230,26 @@ impl ClockWidget {
 		}
 	}
 
+	fn render_digit(num: u32) -> &'static [u8] {
+		 match num {
+			0 => DIGIT_0,
+			1 => DIGIT_1,
+			2 => DIGIT_2,
+			3 => DIGIT_3,
+			4 => DIGIT_4,
+			5 => DIGIT_5,
+			6 => DIGIT_6,
+			7 => DIGIT_7,
+			8 => DIGIT_8,
+			9 => DIGIT_9,
+			_ => DIGIT_0,
+		}
+	}
+
 	fn render_number(num: u32) -> Vec<u8> {
 		let mut numrow = vec![0; 9 * 5];
-		let first_digit = match num / 10 {
-			0 => DIGIT_0,
-			1 => DIGIT_1,
-			2 => DIGIT_2,
-			3 => DIGIT_3,
-			4 => DIGIT_4,
-			5 => DIGIT_5,
-			6 => DIGIT_6,
-			7 => DIGIT_7,
-			8 => DIGIT_8,
-			9 => DIGIT_9,
-			_ => DIGIT_0,
-		};
-		let second_digit = match num % 10 {
-			0 => DIGIT_0,
-			1 => DIGIT_1,
-			2 => DIGIT_2,
-			3 => DIGIT_3,
-			4 => DIGIT_4,
-			5 => DIGIT_5,
-			6 => DIGIT_6,
-			7 => DIGIT_7,
-			8 => DIGIT_8,
-			9 => DIGIT_9,
-			_ => DIGIT_0,
-		};
+		let first_digit = Self::render_digit(num / 10);
+		let second_digit = Self::render_digit(num % 10);
 		for idx in 0..(9*5) {
 			let cell = match idx % 9 {
 				1 | 2 | 3 => {
