@@ -3,7 +3,7 @@ use chrono::{Local, Timelike};
 use crate::matrix::emplace;
 
 const ON_FULL: u8 = 255;
-const ON_DIM: u8 = 128;
+const ON_DIM: u8 = 68;
 const OFF: u8 = 0;
 
 pub struct Shape {
@@ -76,7 +76,7 @@ const DIGIT_5: &'static [u8] = [
 ].as_slice();
 
 const DIGIT_6: &'static [u8] = [
-	ON_FULL, ON_FULL, ON_FULL,
+	OFF, ON_FULL, ON_DIM,
 	ON_FULL, OFF, OFF,
 	ON_FULL, ON_FULL, ON_FULL,
 	ON_FULL, OFF, ON_FULL,
@@ -104,7 +104,7 @@ const DIGIT_9: &'static [u8] = [
 	ON_FULL, OFF, ON_FULL,
 	ON_FULL, ON_FULL, ON_FULL,
 	OFF, OFF, ON_FULL,
-	ON_FULL, ON_FULL, ON_FULL
+	ON_DIM, ON_FULL, OFF
 ].as_slice();
 
 // ================ Widgets ================

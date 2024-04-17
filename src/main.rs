@@ -40,6 +40,7 @@ fn main() {
     loop {
         b.update();
         c.update();
+		clock.update();
 
         let mut matrix = [[0;9];34];
         matrix = matrix::emplace(matrix, Box::from(&mut b), 0, 0);
