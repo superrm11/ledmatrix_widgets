@@ -1,5 +1,9 @@
+use chrono::{Local, Timelike};
+
+use crate::matrix::emplace;
+
 const ON_FULL: u8 = 255;
-const ON_DIM: u8 = 64;
+const ON_DIM: u8 = 128;
 const OFF: u8 = 0;
 
 pub struct Shape {
@@ -21,7 +25,87 @@ const BAT_FRAME: &'static [u8] = [
     OFF, OFF, OFF, ON_FULL, ON_FULL, ON_FULL, OFF, OFF, OFF, OFF, OFF, OFF, ON_FULL, ON_FULL, ON_FULL,
     ON_FULL, ON_FULL, ON_FULL, ON_FULL, ON_FULL, ON_FULL, ON_FULL, OFF,
 ]
-.as_slice();
+	.as_slice();
+
+const DIGIT_0: &'static [u8] = [
+	ON_FULL, ON_FULL, ON_FULL,
+	ON_FULL, OFF, ON_FULL,
+	ON_FULL, OFF, ON_FULL,
+	ON_FULL, OFF, ON_FULL,
+	ON_FULL, ON_FULL, ON_FULL
+].as_slice();
+
+const DIGIT_1: &'static [u8] = [
+	OFF, OFF, ON_FULL,
+	OFF, ON_DIM, ON_FULL,
+	OFF, OFF, ON_FULL,
+	OFF, OFF, ON_FULL,
+	OFF, OFF, ON_FULL
+].as_slice();
+
+const DIGIT_2: &'static [u8] = [
+	ON_FULL, ON_FULL, ON_FULL,
+	OFF, OFF, ON_FULL,
+	ON_FULL, ON_FULL, ON_FULL,
+	ON_FULL, OFF, OFF,
+	ON_FULL, ON_FULL, ON_FULL
+].as_slice();
+
+const DIGIT_3: &'static [u8] = [
+	ON_FULL, ON_FULL, ON_FULL,
+	OFF, OFF, ON_FULL,
+	ON_FULL, ON_FULL, ON_FULL,
+	OFF, OFF, ON_FULL,
+	ON_FULL, ON_FULL, ON_FULL
+].as_slice();
+
+const DIGIT_4: &'static [u8] = [
+	ON_FULL, OFF, ON_FULL,
+	ON_FULL, OFF, ON_FULL,
+	ON_FULL, ON_FULL, ON_FULL,
+	OFF, OFF, ON_FULL,
+	OFF, OFF, ON_FULL
+].as_slice();
+
+const DIGIT_5: &'static [u8] = [
+	ON_FULL, ON_FULL, ON_FULL,
+	ON_FULL, OFF, OFF,
+	ON_FULL, ON_FULL, ON_FULL,
+	OFF, OFF, ON_FULL,
+	ON_FULL, ON_FULL, ON_FULL
+].as_slice();
+
+const DIGIT_6: &'static [u8] = [
+	ON_FULL, ON_FULL, ON_FULL,
+	ON_FULL, OFF, OFF,
+	ON_FULL, ON_FULL, ON_FULL,
+	ON_FULL, OFF, ON_FULL,
+	ON_FULL, ON_FULL, ON_FULL
+].as_slice();
+
+const DIGIT_7: &'static [u8] = [
+	ON_FULL, ON_FULL, ON_FULL,
+	ON_DIM, OFF, ON_FULL,
+	OFF, OFF, ON_FULL,
+	OFF, ON_FULL, OFF,
+	OFF, ON_FULL, OFF
+].as_slice();
+
+const DIGIT_8: &'static [u8] = [
+	ON_FULL, ON_FULL, ON_FULL,
+	ON_FULL, OFF, ON_FULL,
+	ON_FULL, ON_FULL, ON_FULL,
+	ON_FULL, OFF, ON_FULL,
+	ON_FULL, ON_FULL, ON_FULL
+].as_slice();
+
+const DIGIT_9: &'static [u8] = [
+	ON_FULL, ON_FULL, ON_FULL,
+	ON_FULL, OFF, ON_FULL,
+	ON_FULL, ON_FULL, ON_FULL,
+	OFF, OFF, ON_FULL,
+	ON_FULL, ON_FULL, ON_FULL
+].as_slice();
 
 // ================ Widgets ================
 /// -------- Battery Widget --------
@@ -130,5 +214,80 @@ impl UpdatableWidget for AllCPUsWidget {
 
     fn get_shape(&mut self) -> Shape {
         return Shape {x: 9, y:self.cpu_usages.len()};
+    }
+}
+
+pub struct ClockWidget {
+	time: chrono::DateTime<Local>
+}
+
+impl ClockWidget {
+	pub fn new() -> Self {
+		println!("Initializing ClockWidget");
+		let dt = chrono::offset::Local::now();
+		Self {
+			time: dt,
+		}
+	}
+
+	fn render_number(num: u32) -> Vec<u8> {
+		let mut numrow = vec![0; 9 * 5];
+		let first_digit = match num / 10 {
+			0 => DIGIT_0,
+			1 => DIGIT_1,
+			2 => DIGIT_2,
+			3 => DIGIT_3,
+			4 => DIGIT_4,
+			5 => DIGIT_5,
+			6 => DIGIT_6,
+			7 => DIGIT_7,
+			8 => DIGIT_8,
+			9 => DIGIT_9,
+			_ => DIGIT_0,
+		};
+		let second_digit = match num % 10 {
+			0 => DIGIT_0,
+			1 => DIGIT_1,
+			2 => DIGIT_2,
+			3 => DIGIT_3,
+			4 => DIGIT_4,
+			5 => DIGIT_5,
+			6 => DIGIT_6,
+			7 => DIGIT_7,
+			8 => DIGIT_8,
+			9 => DIGIT_9,
+			_ => DIGIT_0,
+		};
+		for idx in 0..(9*5) {
+			let cell = match idx % 9 {
+				1 | 2 | 3 => {
+					first_digit[((idx / 9) * 3) + (idx % 9) - 1]
+				},
+				5 | 6 | 7 => {
+					second_digit[((idx / 9) * 3) + idx % 9 - 5]
+				},
+				_ => { OFF }
+			};
+			numrow[idx] = cell;
+		};
+		numrow
+	}
+}
+
+impl UpdatableWidget for ClockWidget {
+    fn update(&mut self) {
+        self.time = chrono::offset::Local::now();
+    }
+
+    fn get_matrix(&mut self) -> Vec<u8> {
+		let mut matrix = Vec::with_capacity(9 * 11);
+		matrix.extend(Self::render_number(self.time.hour()));
+		matrix.extend(vec![OFF; 9]);
+		matrix.extend(Self::render_number(self.time.minute()));
+		matrix
+    }
+
+    fn get_shape(&mut self) -> Shape {
+        return Shape{x: 9, y: 11}
     }
 }

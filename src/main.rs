@@ -5,7 +5,7 @@ use std::{process::exit, thread, time::Duration};
 
 use ledmatrix::LedMatrix;
 
-use crate::widget::{AllCPUsWidget, BatteryWidget, UpdatableWidget};
+use crate::widget::{AllCPUsWidget, BatteryWidget, ClockWidget, UpdatableWidget};
 
 fn main() {
     // TODO possible options: 
@@ -32,9 +32,10 @@ fn main() {
 
     let mut b = BatteryWidget::new();
     let mut c = AllCPUsWidget::new();
+	let mut clock = ClockWidget::new();
 
     let blank = [[0;9];34];
-    mats[1].draw_matrix(blank);
+    mats[0].draw_matrix(blank);
 
     loop {
         b.update();
@@ -43,6 +44,7 @@ fn main() {
         let mut matrix = [[0;9];34];
         matrix = matrix::emplace(matrix, Box::from(&mut b), 0, 0);
         matrix = matrix::emplace(matrix, Box::from(&mut c), 0, 5);
+		matrix = matrix::emplace(matrix, Box::from(&mut clock), 0, 22);
         mats[0].draw_matrix(matrix);
         thread::sleep(Duration::from_millis(2000));
     }
