@@ -25,7 +25,7 @@ Or, you can download from here:
 [Arch Linux](https://github.com/superrm11/ledmatrix_widgets/releases/download/v0.1/ledmatrix_widgets-0.1.0-1-x86_64.pkg.tar.zst)   
 [Windows](https://github.com/superrm11/ledmatrix_widgets/releases/download/v0.1/ledmatrix_widgets-0.1.0-x86_64.msi)   
 
-Note - these installers will only install the executable and add it to your path - you can only run by running the command `ledmatrix_usage`.
+Note - these installers will only install the executable and add it to your path - you can only run by running the command `ledmatrix_widgets`.
 There are plans to package a .desktop / systemd unit file, and add a shortcut to Startup for Windows, but that will have to wait for 
 future releases.
 
