@@ -8,6 +8,7 @@ authors = ["Ryan McGee"]
 
 [dependencies]
 battery = "0.7.8"
+clap = { version = "4.5.4", features = ["derive"] }
 #serialport = {version = "4.3.0", default-features = false}
 serialport = "4.3.0"
 sysinfo = "0.30.9"

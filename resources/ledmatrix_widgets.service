@@ -1,0 +1,8 @@
+[Unit]
+Description=ledmatrix_widgets startup script
+
+[Service]
+ExecStart=/usr/bin/ledmatrix_widgets
+
+[Install]
+WantedBy=multi-user.target
