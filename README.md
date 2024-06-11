@@ -5,6 +5,7 @@ A rust application for creating and displaying widgets on the Framework 16 LED M
 ### Current Widgets
 - Current battery life
 - CPU usage per-core
+- 24hr clock
 
 ### Future Additions
 - RAM usage
