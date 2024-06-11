@@ -11,7 +11,7 @@ use std::{
 use clap::Parser;
 use ledmatrix::LedMatrix;
 
-use crate::widget::{AllCPUsWidget, BatteryWidget, UpdatableWidget};
+use crate::widget::{AllCPUsWidget, BatteryWidget, ClockWidget, UpdatableWidget};
 
 #[derive(Parser)]
 #[command(version, about, long_about=None)]
@@ -61,22 +61,32 @@ fn main() {
     match program {
         Program::Default => {
             let mut mats = LedMatrix::detect();
+            if mats.len() == 0 {
+                println!("No modules found, unable to continue.");
+                exit(1);
+            }
 
             // No arguments provided? Start the
             if args().len() <= 1 {
-                let mut b = BatteryWidget::new();
-                let mut c = AllCPUsWidget::new();
+                let mut bat = BatteryWidget::new();
+                let mut cpu = AllCPUsWidget::new(false);
+                let mut clock = ClockWidget::new();
 
                 let blank = [[0; 9]; 34];
-                mats[1].draw_matrix(blank);
+
+                if mats.len() == 2 {
+                    mats[1].draw_matrix(blank);
+                }
 
                 loop {
-                    b.update();
-                    c.update();
+                    bat.update();
+                    cpu.update();
+                    clock.update();
 
                     let mut matrix = [[0; 9]; 34];
-                    matrix = matrix::emplace(matrix, Box::from(&mut b), 0, 0);
-                    matrix = matrix::emplace(matrix, Box::from(&mut c), 0, 5);
+                    matrix = matrix::emplace(matrix, &bat, 0, 0);
+                    matrix = matrix::emplace(matrix, &cpu, 0, 5);
+                    matrix = matrix::emplace(matrix, &clock, 0, 23);
                     mats[0].draw_matrix(matrix);
                     thread::sleep(Duration::from_millis(2000));
                 }
