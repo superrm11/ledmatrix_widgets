@@ -23,16 +23,14 @@ struct Cli {
 
     /// List all widgets available for placement
     #[arg(long)]
-    list_widgets: bool,
+    list_widgets: bool, // ======== Program Control ========
+                        // #[arg(long)]
+                        // Start the background service updating the matrix
+                        // start: bool,
 
-    // ======== Program Control ========
-    #[arg(long)]
-    /// Start the background service updating the matrix
-    start: bool,
-
-    #[arg(long)]
-    /// JSON config file path
-    config: Option<String>,
+                        // #[arg(long)]
+                        // JSON config file path
+                        // config: Option<String>,
 }
 
 enum Program {
@@ -91,13 +89,24 @@ fn main() {
                     thread::sleep(Duration::from_millis(2000));
                 }
             }
-        },
+        }
         Program::ListMod => {
             LedMatrix::detect();
-        },
-        Program::ListWid => println!("Not yet implemented :')"),
-
-        // _ => {}
+        }
+        Program::ListWid => {
+            println!(
+                "Battery Indicator:\n \
+                A 9x4 widget in the shape of a battery, with an internal bar indicating remaining capacity.\n"
+            );
+            println!(
+                "CPU Usage Indicator:\n \
+                A 9x16 widget where each row of LEDs is a bar that represents the CPU usage of one core.\n"
+            );
+            println!(
+                "Clock Widget:\n \
+                A 9x11 widget that displays the system time in 24hr format.\n"
+            );
+        } // _ => {}
     }
 
     exit(0);
