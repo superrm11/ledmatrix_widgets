@@ -10,8 +10,13 @@ use std::{
 
 use clap::Parser;
 use ledmatrix::LedMatrix;
+use std::time::Instant;
 
 use crate::widget::{AllCPUsWidget, BatteryWidget, ClockWidget, UpdatableWidget};
+
+
+const UPDATE_PERIOD:i32 = 2000;
+
 
 #[derive(Parser)]
 #[command(version, about, long_about=None)]
@@ -77,6 +82,10 @@ fn main() {
                 }
 
                 loop {
+                    let start = Instant::now();
+
+                    // do stuff
+
                     bat.update();
                     cpu.update();
                     clock.update();
@@ -86,7 +95,12 @@ fn main() {
                     matrix = matrix::emplace(matrix, &cpu, 0, 5);
                     matrix = matrix::emplace(matrix, &clock, 0, 23);
                     mats[0].draw_matrix(matrix);
-                    thread::sleep(Duration::from_millis(2000));
+                    let elapsed = start.elapsed().as_millis();
+                    let time_to_sleep = UPDATE_PERIOD-elapsed as i32;
+                    if time_to_sleep > 0
+                    {
+                        thread::sleep(Duration::from_millis(time_to_sleep.try_into().unwrap()));
+                    }
                 }
             }
         }
