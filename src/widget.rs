@@ -140,7 +140,7 @@ impl UpdatableWidget for BatteryWidget {
 // -------- All Cores CPU Usage Widget --------
 /// Create a widget that displays the usage of all CPU cores, one per row.
 pub struct AllCPUsWidget {
-    cpu_usages: Vec<u8>,
+    cpu_usages: Vec<f32>,
     merge_threads: bool,
     sys: sysinfo::System,
 }
@@ -153,7 +153,7 @@ impl AllCPUsWidget {
         println!("Initializing AllCPUsWidget");
 
         AllCPUsWidget {
-            cpu_usages: vec![0; newsys.cpus().len()],
+            cpu_usages: vec![0.0; newsys.cpus().len()],
             merge_threads,
             sys: newsys,
         }
@@ -166,7 +166,7 @@ impl UpdatableWidget for AllCPUsWidget {
         self.sys.refresh_cpu();
 
         for (idx, usage) in self.sys.cpus().iter().enumerate() {
-            self.cpu_usages[idx] = usage.cpu_usage().round() as u8;
+            self.cpu_usages[idx] = usage.cpu_usage();
         }
     }
 
@@ -181,7 +181,7 @@ impl UpdatableWidget for AllCPUsWidget {
             for idy in 0..height {
 				let inverse_y = height - (idy + 1);
                 for (idx, chunk) in self.cpu_usages.chunks(2).enumerate() {
-                    let usage = (chunk[0] + chunk[1]) / 2;
+                    let usage = (chunk[0] + chunk[1]) / 2.0;
 					if usage as usize >= inverse_y * 10 {
 						out[(idy * width) + idx] = ON_FULL;
 					}
@@ -189,9 +189,15 @@ impl UpdatableWidget for AllCPUsWidget {
             }
         } else {
             for y in 0..16 {
+                let bar_width_in_pixels = self.cpu_usages[y] / 100.0 * width as f32;
                 for x in 0..width {
-                    if x <= (self.cpu_usages[y] as f32 * width as f32 / 100f32) as usize {
+                    let percent_on = bar_width_in_pixels - x as f32;// this is a float telling how much the pixel should be on
+                    if percent_on > 1.0 {//if we are more than 100% on
                         out[x + (y * width)] = ON_FULL;
+                    }
+                    else if percent_on > 0.0//if we are fractionally on - the end of the bar
+                    {
+                        out[x + (y * width)] = (ON_FULL as f32 * percent_on) as u8;
                     }
                 }
             }
