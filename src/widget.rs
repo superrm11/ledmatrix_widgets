@@ -137,6 +137,63 @@ impl UpdatableWidget for BatteryWidget {
     }
 }
 
+/// -------- Battery Widget Ugly --------
+/// Create a widget that displays the battery remaining in the laptop
+pub struct BatteryWidgetUgly {
+    bat_level_pct: f32,
+}
+
+impl BatteryWidgetUgly {
+    pub fn new() -> BatteryWidgetUgly {
+        println!("Initializing BatteryWidgetUgly");
+        BatteryWidgetUgly { bat_level_pct: 0.0 }
+    }
+}
+
+impl UpdatableWidget for BatteryWidgetUgly {
+    fn update(&mut self) {
+        // Update the battery percentage
+        self.bat_level_pct = battery::Manager::new()
+            .unwrap()
+            .batteries()
+            .unwrap()
+            .enumerate()
+            .next()
+            .unwrap()
+            .1
+            .unwrap()
+            .state_of_charge()
+            .get::<battery::units::ratio::percent>();
+    }
+
+    fn get_matrix(&self) -> Vec<u8> {
+        // Create the matrix
+        let mut out: Vec<u8> = vec![OFF; self.get_shape().x * self.get_shape().y];
+
+        let width = self.get_shape().x;
+
+        let bar_width_in_pixels = self.bat_level_pct / 100.0 * width as f32;
+        println!("width: {bar_width_in_pixels}");
+        for x in 0..width {
+            let percent_on = bar_width_in_pixels - x as f32;// this is a float telling how much the pixel should be on
+            if percent_on > 1.0 {//if we are more than 100% on
+                out[x] = ON_FULL;
+            }
+            else if percent_on > 0.0//if we are fractionally on - the end of the bar
+            {
+                out[x] = (ON_FULL as f32 * percent_on) as u8;
+            }
+            out[x + width] = out[x];
+        }
+
+        out
+    }
+
+    fn get_shape(&self) -> Shape {
+        return Shape { x: 9, y: 2 };
+    }
+}
+
 // -------- All Cores CPU Usage Widget --------
 /// Create a widget that displays the usage of all CPU cores, one per row.
 pub struct AllCPUsWidget {
