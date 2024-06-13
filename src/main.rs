@@ -12,10 +12,10 @@ use clap::Parser;
 use ledmatrix::LedMatrix;
 use std::time::Instant;
 
-use crate::widget::{AllCPUsWidget, BatteryWidgetUgly, ClockWidget, UpdatableWidget};
+use crate::widget::{AllCPUsWidget, BatteryWidgetUgly, RAMWidget, ClockWidget, UpdatableWidget};
 
 
-const UPDATE_PERIOD:i32 = 1000;
+const UPDATE_PERIOD:i32 = 500;
 
 
 #[derive(Parser)]
@@ -72,6 +72,7 @@ fn main() {
             // No arguments provided? Start the
             if args().len() <= 1 {
                 let mut bat = BatteryWidgetUgly::new();
+                let mut ram = RAMWidget::new();
                 let mut cpu = AllCPUsWidget::new(false);
                 let mut clock = ClockWidget::new();
 
@@ -80,18 +81,24 @@ fn main() {
                 if mats.len() == 2 {
                     mats[1].draw_matrix(blank);
                 }
-
+                let mut ticker:u8 = 0;
                 loop {
                     let start = Instant::now();
 
                     // do stuff
 
                     bat.update();
-                    cpu.update();
-                    clock.update();
+                    ram.update();
+                    if(ticker%2==0)
+                    {
+                        cpu.update();
+                        clock.update();
+                    }
+                    ticker = ticker.wrapping_add(1);
 
                     let mut matrix = [[0; 9]; 34];
                     matrix = matrix::emplace(matrix, &bat, 0, 0);
+                    matrix = matrix::emplace(matrix, &ram, 0, 3);
                     matrix = matrix::emplace(matrix, &cpu, 0, 6);
                     matrix = matrix::emplace(matrix, &clock, 0, 23);
                     mats[0].draw_matrix(matrix);

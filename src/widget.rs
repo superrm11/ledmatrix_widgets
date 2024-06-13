@@ -85,7 +85,61 @@ const DIGIT_9: &'static [u8] = [
 ]
 .as_slice();
 
+
+
 // ================ Widgets ================
+
+/// -------- RAM Widget --------
+/// Create a widget that displays the battery remaining in the laptop
+pub struct RAMWidget {
+    ram_perc: f32,
+    sys: sysinfo::System,
+}
+
+impl RAMWidget {
+    pub fn new() -> RAMWidget {
+        println!("Initializing RAMWidget");
+        let newsys = sysinfo::System::new();
+        RAMWidget { ram_perc: 0.0, sys: newsys }
+    }
+}
+
+impl UpdatableWidget for RAMWidget {
+    fn update(&mut self) {
+        // Refresh the cpu usage
+        self.sys.refresh_memory();
+        self.ram_perc = self.sys.used_memory() as f32 /self.sys.total_memory() as f32;
+        // println!("{0} {1}",self.sys.used_memory(), self.sys.total_memory());
+    }
+
+    fn get_matrix(&self) -> Vec<u8> {
+        // Create the matrix
+        let mut out: Vec<u8> = vec![OFF; self.get_shape().x * self.get_shape().y];
+
+        let width = self.get_shape().x;
+
+        let bar_width_in_pixels = self.ram_perc * width as f32;
+        for x in 0..width {
+            let percent_on = bar_width_in_pixels - x as f32;// this is a float telling how much the pixel should be on
+            if percent_on > 1.0 {//if we are more than 100% on
+                out[x] = ON_FULL;
+            }
+            else if percent_on > 0.0//if we are fractionally on - the end of the bar
+            {
+                out[x] = (ON_FULL as f32 * percent_on) as u8;
+            }
+            out[x + width] = out[x];
+        }
+
+        out
+    }
+
+    fn get_shape(&self) -> Shape {
+        return Shape { x: 9, y: 2 };
+    }
+}
+
+
 /// -------- Battery Widget --------
 /// Create a widget that displays the battery remaining in the laptop
 pub struct BatteryWidget {
@@ -95,7 +149,7 @@ pub struct BatteryWidget {
 impl BatteryWidget {
     pub fn new() -> BatteryWidget {
         println!("Initializing BatteryWidget");
-        BatteryWidget { bat_level_pct: 0.0 }
+        BatteryWidget { bat_level_pct: 0.0}
     }
 }
 
@@ -141,19 +195,22 @@ impl UpdatableWidget for BatteryWidget {
 /// Create a widget that displays the battery remaining in the laptop
 pub struct BatteryWidgetUgly {
     bat_level_pct: f32,
+    state: battery::State,
+    looper: u8,
 }
 
 impl BatteryWidgetUgly {
     pub fn new() -> BatteryWidgetUgly {
         println!("Initializing BatteryWidgetUgly");
-        BatteryWidgetUgly { bat_level_pct: 0.0 }
+        BatteryWidgetUgly { bat_level_pct: 0.0, state: battery::State::Discharging, looper: 0 }
     }
 }
 
 impl UpdatableWidget for BatteryWidgetUgly {
     fn update(&mut self) {
         // Update the battery percentage
-        self.bat_level_pct = battery::Manager::new()
+        let bat_man = battery::Manager::new();
+        self.bat_level_pct = bat_man.as_ref()
             .unwrap()
             .batteries()
             .unwrap()
@@ -164,6 +221,20 @@ impl UpdatableWidget for BatteryWidgetUgly {
             .unwrap()
             .state_of_charge()
             .get::<battery::units::ratio::percent>();
+
+
+        let state = bat_man.as_ref()
+            .unwrap()
+            .batteries()
+            .unwrap()
+            .enumerate()
+            .next()
+            .unwrap()
+            .1
+            .unwrap()
+            .state();
+        self.state = state;
+        self.looper = self.looper.wrapping_add(1);
     }
 
     fn get_matrix(&self) -> Vec<u8> {
@@ -173,19 +244,41 @@ impl UpdatableWidget for BatteryWidgetUgly {
         let width = self.get_shape().x;
 
         let bar_width_in_pixels = self.bat_level_pct / 100.0 * width as f32;
-        println!("width: {bar_width_in_pixels}");
         for x in 0..width {
-            let percent_on = bar_width_in_pixels - x as f32;// this is a float telling how much the pixel should be on
-            if percent_on > 1.0 {//if we are more than 100% on
-                out[x] = ON_FULL;
-            }
-            else if percent_on > 0.0//if we are fractionally on - the end of the bar
+            if self.state == battery::State::Full
             {
-                out[x] = (ON_FULL as f32 * percent_on) as u8;
+                out[x] = ON_DIM;
+            }
+            else
+            {
+                let percent_on = bar_width_in_pixels - x as f32;// this is a float telling how much the pixel should be on
+                if percent_on > 1.0 {//if we are more than 100% on
+                    out[x] = ON_DIM;
+                }
+                else if percent_on > 0.0//if we are fractionally on - the end of the bar
+                {
+                    out[x] = (ON_DIM as f32 * percent_on) as u8;
+                }
+                if (x as f32) < bar_width_in_pixels
+                {
+                    if self.state == battery::State::Charging
+                    {
+                        if (self.looper.wrapping_sub(x as u8)) % (bar_width_in_pixels as u8 + 1) < 2
+                        {
+                            out[x] = 255;
+                        }
+                    }
+                    else
+                    {
+                        if (self.looper.wrapping_add(x as u8)) % (bar_width_in_pixels as u8 + 1) < 2
+                        {
+                            out[x] = 255;
+                        }
+                    }
+                }
             }
             out[x + width] = out[x];
         }
-
         out
     }
 
