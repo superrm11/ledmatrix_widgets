@@ -4,6 +4,7 @@ const ON_FULL: u8 = 120;
 const ON_DIM: u8 = 68;
 const OFF: u8 = 0;
 
+#[derive(Clone)]
 pub struct Shape {
     pub x: usize,
     pub y: usize,
@@ -12,8 +13,8 @@ pub struct Shape {
 /// A standard set of instructions for widgets that can be updated from the system
 pub trait UpdatableWidget {
     fn update(&mut self);
-    fn get_matrix(&self) -> Vec<u8>;
-    fn get_shape(&self) -> Shape;
+    fn get_matrix(&self) -> &Vec<u8>;
+    fn get_shape(&self) -> &Shape;
 }
 
 // ================ Frames ================
@@ -89,20 +90,26 @@ const DIGIT_9: &'static [u8] = [
 /// -------- Battery Widget --------
 /// Create a widget that displays the battery remaining in the laptop
 pub struct BatteryWidget {
-    bat_level_pct: f32,
+    matrix: Vec<u8>,
+    shape: Shape,
+    chrg_ind: bool
 }
 
 impl BatteryWidget {
     pub fn new() -> BatteryWidget {
         println!("Initializing BatteryWidget");
-        BatteryWidget { bat_level_pct: 0.0 }
+        BatteryWidget { 
+            matrix: vec![], 
+            chrg_ind: false,
+            shape: Shape{x: 9, y:4}
+        }
     }
 }
 
 impl UpdatableWidget for BatteryWidget {
     fn update(&mut self) {
         // Update the battery percentage
-        self.bat_level_pct = battery::Manager::new()
+        let battery_dev = battery::Manager::new()
             .unwrap()
             .batteries()
             .unwrap()
@@ -110,30 +117,42 @@ impl UpdatableWidget for BatteryWidget {
             .next()
             .unwrap()
             .1
-            .unwrap()
-            .state_of_charge()
+            .unwrap();
+
+        // Update whether or not the device is charging
+        let bat_level_pct = battery_dev.state_of_charge()
             .get::<battery::units::ratio::percent>();
-    }
+        
+        let is_charging = battery_dev.state() == battery::State::Charging;
 
-    fn get_matrix(&self) -> Vec<u8> {
-        // Create the matrix
-        let mut out: Vec<u8> = Vec::new();
-        out.extend_from_slice(BAT_FRAME);
+        // Recreate the matrix
+        self.matrix = vec![];
+        self.matrix.extend_from_slice(BAT_FRAME);
 
-        let num_illum = (self.bat_level_pct * 6.0 / 100.0).round();
+        let num_illum = (bat_level_pct * 6.0 / 100.0).round();
 
+        // Fill battery bar
         for i in 1..7 {
             if i <= num_illum as usize {
-                out[(self.get_shape().x) + i] = ON_DIM;
-                out[(self.get_shape().x * 2) + i] = ON_DIM;
+                self.matrix[(self.shape.x) + i] = ON_DIM;
+                self.matrix[(self.shape.x * 2) + i] = ON_DIM;
             }
         }
 
-        out
+        // Charging indicator
+        if is_charging && bat_level_pct < 99.0 {
+            self.matrix[self.shape.x + num_illum as usize] = if self.chrg_ind {ON_DIM} else {OFF};
+            self.matrix[(2*self.shape.x) + num_illum as usize] = if self.chrg_ind {ON_DIM} else {OFF};
+            self.chrg_ind = !self.chrg_ind;
+        }
     }
 
-    fn get_shape(&self) -> Shape {
-        return Shape { x: 9, y: 4 };
+    fn get_matrix(&self) -> &Vec<u8> {
+        &self.matrix
+    }
+
+    fn get_shape(&self) -> &Shape {
+        &self.shape
     }
 }
 
@@ -143,6 +162,8 @@ pub struct AllCPUsWidget {
     cpu_usages: Vec<u8>,
     merge_threads: bool,
     sys: sysinfo::System,
+    matrix: Vec<u8>,
+    shape: Shape
 }
 
 impl AllCPUsWidget {
@@ -153,9 +174,17 @@ impl AllCPUsWidget {
         println!("Initializing AllCPUsWidget");
 
         AllCPUsWidget {
+            shape: match merge_threads {
+                false => Shape {
+                    x: 9,
+                    y: newsys.cpus().len(),
+                },
+                true => Shape { x: 8, y: 8 },
+            },
             cpu_usages: vec![0; newsys.cpus().len()],
             merge_threads,
             sys: newsys,
+            matrix: vec![],
         }
     }
 }
@@ -168,14 +197,11 @@ impl UpdatableWidget for AllCPUsWidget {
         for (idx, usage) in self.sys.cpus().iter().enumerate() {
             self.cpu_usages[idx] = usage.cpu_usage().round() as u8;
         }
-    }
 
-    /// Refresh the CPU usage and redraw the matrix
-    fn get_matrix(&self) -> Vec<u8> {
         // Create the matrix
         let width = self.get_shape().x;
 		let height = self.get_shape().y;
-        let mut out = vec![OFF; width * height];
+        self.matrix = vec![OFF; width * height];
 
         if self.merge_threads {
             for idy in 0..height {
@@ -183,7 +209,7 @@ impl UpdatableWidget for AllCPUsWidget {
                 for (idx, chunk) in self.cpu_usages.chunks(2).enumerate() {
                     let usage = (chunk[0] + chunk[1]) / 2;
 					if usage as usize >= inverse_y * 10 {
-						out[(idy * width) + idx] = ON_FULL;
+						self.matrix[(idy * width) + idx] = ON_FULL;
 					}
                 }
             }
@@ -191,27 +217,24 @@ impl UpdatableWidget for AllCPUsWidget {
             for y in 0..16 {
                 for x in 0..width {
                     if x <= (self.cpu_usages[y] as f32 * width as f32 / 100f32) as usize {
-                        out[x + (y * width)] = ON_FULL;
+                        self.matrix[x + (y * width)] = ON_FULL;
                     }
                 }
             }
         }
-
-        out
     }
 
-    fn get_shape(&self) -> Shape {
-        return match self.merge_threads {
-            false => Shape {
-                x: 9,
-                y: self.cpu_usages.len(),
-            },
-            true => Shape { x: 8, y: 8 },
-        };
+    fn get_matrix(&self) -> &Vec<u8> {
+        &self.matrix
+    }
+
+    fn get_shape(&self) -> &Shape {
+        &self.shape
     }
 }
 
 pub struct ClockWidget {
+    matrix: Vec<u8>,
     time: chrono::DateTime<Local>,
 }
 
@@ -219,7 +242,7 @@ impl ClockWidget {
     pub fn new() -> Self {
         println!("Initializing ClockWidget");
         let dt = chrono::offset::Local::now();
-        Self { time: dt }
+        Self { time: dt, matrix: vec![] }
     }
 
     fn render_digit(num: u32) -> &'static [u8] {
@@ -257,17 +280,18 @@ impl ClockWidget {
 impl UpdatableWidget for ClockWidget {
     fn update(&mut self) {
         self.time = chrono::offset::Local::now();
+        self.matrix = Vec::with_capacity(9 * 11);
+        self.matrix.extend(Self::render_number(self.time.hour()));
+        self.matrix.extend(vec![OFF; 9]);
+        self.matrix.extend(Self::render_number(self.time.minute()));
+        
     }
 
-    fn get_matrix(&self) -> Vec<u8> {
-        let mut matrix = Vec::with_capacity(9 * 11);
-        matrix.extend(Self::render_number(self.time.hour()));
-        matrix.extend(vec![OFF; 9]);
-        matrix.extend(Self::render_number(self.time.minute()));
-        matrix
+    fn get_matrix(&self) -> &Vec<u8> {
+        &self.matrix
     }
 
-    fn get_shape(&self) -> Shape {
-        return Shape { x: 9, y: 11 };
+    fn get_shape(&self) -> &Shape {
+        return &Shape { x: 9, y: 11 };
     }
 }

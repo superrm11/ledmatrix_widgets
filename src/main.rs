@@ -82,9 +82,9 @@ fn main() {
                     clock.update();
 
                     let mut matrix = [[0; 9]; 34];
-                    matrix = matrix::emplace(matrix, &bat, 0, 0);
-                    matrix = matrix::emplace(matrix, &cpu, 0, 5);
-                    matrix = matrix::emplace(matrix, &clock, 0, 23);
+                    matrix = matrix::emplace(matrix, &mut bat, 0, 0);
+                    matrix = matrix::emplace(matrix, &mut cpu, 0, 5);
+                    matrix = matrix::emplace(matrix, &mut clock, 0, 23);
                     mats[0].draw_matrix(matrix);
                     thread::sleep(Duration::from_millis(2000));
                 }
