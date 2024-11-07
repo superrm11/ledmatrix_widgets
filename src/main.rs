@@ -2,10 +2,9 @@ mod ledmatrix;
 mod matrix;
 mod widget;
 use std::{
-    env::{args, args_os},
     process::exit,
     thread,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use clap::Parser;
@@ -23,14 +22,31 @@ struct Cli {
 
     /// List all widgets available for placement
     #[arg(long)]
-    list_widgets: bool, // ======== Program Control ========
-                        // #[arg(long)]
-                        // Start the background service updating the matrix
-                        // start: bool,
+    list_widgets: bool, 
+    // ======== Program Control ========
+    /// Refresh rate, in Hz
+    #[arg(long, default_value_t = 0.5)]
+    rate: f64,
 
-                        // #[arg(long)]
-                        // JSON config file path
-                        // config: Option<String>,
+    // #[arg(long)]
+    // Start the background service updating the matrix
+    // start: bool,
+
+    // #[arg(long)]
+    // JSON config file path
+    // config: Option<String>,
+}
+
+struct Settings {
+    rate: f64
+}
+
+fn define_settings(args: Cli) -> Settings{
+    let settings = Settings { 
+        rate: args.rate
+    };
+
+    settings
 }
 
 enum Program {
@@ -47,13 +63,19 @@ fn main() {
 
     let mut program = Program::Default;
 
-    if args_os().len() > 1 {
-        let cli = Cli::parse();
-        if cli.list_modules {
-            program = Program::ListMod;
-        } else if cli.list_widgets {
-            program = Program::ListWid;
-        }
+    let cli = Cli::parse();
+
+    if cli.list_modules {
+        program = Program::ListMod;
+    } else if cli.list_widgets {
+        program = Program::ListWid;
+    }
+
+    let settings = define_settings(cli);
+
+    if settings.rate > 5.5 {
+        println!("Framerate is currently limited to 5.5hz due to technical limitation. Will be fixed soon!");
+        exit(1);
     }
 
     match program {
@@ -64,31 +86,45 @@ fn main() {
                 exit(1);
             }
 
-            // No arguments provided? Start the
-            if args().len() <= 1 {
-                let mut bat = BatteryWidget::new();
-                let mut cpu = AllCPUsWidget::new(false);
-                let mut clock = ClockWidget::new();
+            // No arguments provided? Start the default program
+            // if args().len() <= 1 {
+            let mut bat = BatteryWidget::new();
+            let mut cpu = AllCPUsWidget::new(false);
+            let mut clock = ClockWidget::new();
 
-                let blank = [[0; 9]; 34];
+            let blank = [[0; 9]; 34];
 
-                if mats.len() == 2 {
-                    mats[1].draw_matrix(blank);
-                }
-
-                loop {
-                    bat.update();
-                    cpu.update();
-                    clock.update();
-
-                    let mut matrix = [[0; 9]; 34];
-                    matrix = matrix::emplace(matrix, &mut bat, 0, 0);
-                    matrix = matrix::emplace(matrix, &mut cpu, 0, 5);
-                    matrix = matrix::emplace(matrix, &mut clock, 0, 23);
-                    mats[0].draw_matrix(matrix);
-                    thread::sleep(Duration::from_millis(2000));
-                }
+            if mats.len() == 2 {
+                mats[1].draw_matrix(blank);
             }
+
+            let mut saved_time = Instant::now();
+
+            loop {
+                bat.update();
+                cpu.update();
+                clock.update();
+
+                let mut matrix = [[0; 9]; 34];
+                matrix = matrix::emplace(matrix, &mut bat, 0, 0);
+                matrix = matrix::emplace(matrix, &mut cpu, 0, 5);
+                matrix = matrix::emplace(matrix, &mut clock, 0, 23);
+                mats[0].draw_matrix(matrix);
+
+                let period = Duration::from_secs_f64(1f64 / settings.rate);
+                let elapsed = Instant::now().duration_since(saved_time);
+
+                // Tested maximum framerate is 5.5 w/ brightness control function
+                if period > elapsed {
+                    thread::sleep(period - elapsed);
+                } else {
+                    println!("Warning - Framerate is too fast!");
+                }
+                
+                saved_time = Instant::now();
+                
+            }
+            // }
         }
         Program::ListMod => {
             LedMatrix::detect();
