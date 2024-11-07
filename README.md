@@ -26,6 +26,8 @@ Note - these installers will only install the executable and add it to your path
 There are plans to package a .desktop / systemd unit file, and add a shortcut to Startup for Windows, but that will have to wait for 
 future releases.
 
+One possible way to automatically start this program on boot for 'nix operating systems is with `cron`. Provided your operating system supports `@reboot` annotations (which you can confirm via your OS's documentation with `man 5 crontab | grep @reboot`), you can edit your cron via `crontab -e` and add this line: `@reboot ledmatrix_widgets`.
+
 ### Build Instructions
 
 Prereqs:
